@@ -39,11 +39,11 @@ void loop() {
   Serial.print(forw);
   Serial.print(" Right: ");
   Serial.println(right);
-  if(left<THRES && right<THRES && forw>THRES)
+  if(left<THRES && right != 0 && left != 0 && right<THRES && (forw>THRES||forw == 0))
     goforward();
-  else if(left>THRES && right<THRES)
+  else if((left>THRES||left == 0) && right<THRES && right != 0)
     intersectionleft();
-  else if(left<THRES && right>THRES)
+  else if(left<THRES && left!= 0 && (right>THRES||right == 0))
     intersectionright();
 }
 
