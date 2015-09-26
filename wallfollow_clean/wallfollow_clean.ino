@@ -3,15 +3,15 @@
 #define SONAR_NUM     3 // Number or sensors.
 #define MAX_DISTANCE 400 // Maximum distance (in cm) to ping.
 #define PING_INTERVAL 66 // Milliseconds between sensor pings (29ms is about the min to avoid cross-sensor echo).
-#define THRES 10
+#define THRES 12
 #define THRESH_UP 50
 #define ERROR_THRESH 8
-#define IN1 6
-#define IN2 4
-#define IN4 2
-#define IN3 7
-#define EN1 3
-#define EN2 5
+#define IN1 10
+#define IN2 13
+#define IN4 11
+#define IN3 12
+#define EN1 8
+#define EN2 9
 unsigned long pingTimer[SONAR_NUM]; // Holds the times when the next ping should happen for each sensor.
 unsigned int cm[SONAR_NUM];         // Where the ping distances are stored.
 uint8_t currentSensor = 0;          // Keeps track of which sensor is active.
@@ -27,6 +27,7 @@ int getdistleft();
 int getdistright();
 int getdistfor();
 void goforward();
+void stall();
 int left;
 int right;
 int forw;
@@ -69,6 +70,10 @@ void loop()
     intersectionleft();
   else if((left<THRES && left!= 0) && (right >= THRESH_UP))
     intersectionright();
+   else
+   {
+    stall();
+   }
   // The rest of your code would go here.
 }
 void get_distance_all_sensors()
@@ -84,7 +89,7 @@ void get_distance_all_sensors()
           cm[currentSensor] = 0;                      // Make distance zero in case there's no ping echo for this sensor.
           sonar[currentSensor].ping_timer(echoCheck); // Do the ping (processing continues, interrupt will call echoCheck to look for echo).
       }
-    }  
+    }  //
     left = cm[0];
     forw = cm[1];
     right = cm[2];
@@ -116,39 +121,64 @@ void intersectionleft() //code to be run if there is a left turn intersection
     turnleft();
     get_distance_all_sensors();
     Serial.println("left");
-    Serial.print("IN1 : ");Serial.println(digitalRead(IN1));
-    Serial.print("IN2 : ");Serial.println(digitalRead(IN2));
-    Serial.print("IN3 : ");Serial.println(digitalRead(IN3));
-    Serial.print("IN4 : ");Serial.println(digitalRead(IN4));
+  
   }
   
 }
 
 void goforward()
 {
+  Serial.println("###########GO FORWARD ###########");
   digitalWrite(IN1,LOW);
   digitalWrite(IN2,HIGH);
-  digitalWrite(IN3,HIGH);
-  digitalWrite(IN4,LOW);
+  digitalWrite(IN3,LOW);
+  digitalWrite(IN4,HIGH);
+    Serial.print("IN1 : ");Serial.println(digitalRead(IN1));
+    Serial.print("IN2 : ");Serial.println(digitalRead(IN2));
+    Serial.print("IN3 : ");Serial.println(digitalRead(IN3));
+    Serial.print("IN4 : ");Serial.println(digitalRead(IN4));
 }
 
 void turnleft()
 {
+  Serial.println("###########LEFT TURN ###########");
   digitalWrite(IN1,LOW); 
   digitalWrite(IN2,HIGH);
   digitalWrite(IN3,HIGH);
   digitalWrite(IN4,LOW);
+  digitalWrite(IN1,LOW); 
+  digitalWrite(IN2,HIGH);
+  digitalWrite(IN3,HIGH);
+  digitalWrite(IN4,LOW);
+    Serial.print("IN1 : ");Serial.println(digitalRead(IN1));
+    Serial.print("IN2 : ");Serial.println(digitalRead(IN2));
+    Serial.print("IN3 : ");Serial.println(digitalRead(IN3));
+    Serial.print("IN4 : ");Serial.println(digitalRead(IN4));
 }
 
 void turnright()
 {
+  Serial.println("###########RIGHT TURN ###########");
   digitalWrite(IN1,HIGH);
   digitalWrite(IN2,LOW);
   digitalWrite(IN3,LOW);
   digitalWrite(IN4,HIGH);
+  digitalWrite(IN1,HIGH);
+  digitalWrite(IN2,LOW);
+  digitalWrite(IN3,LOW);
+  digitalWrite(IN4,HIGH);
+  
+    Serial.print("IN1 : ");Serial.println(digitalRead(IN1));
+    Serial.print("IN2 : ");Serial.println(digitalRead(IN2));
+    Serial.print("IN3 : ");Serial.println(digitalRead(IN3));
+    Serial.print("IN4 : ");Serial.println(digitalRead(IN4));
 }
 void correctright()
 {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
   digitalWrite(IN1, HIGH);
   digitalWrite(IN2, LOW);
   digitalWrite(IN3, HIGH);
@@ -165,7 +195,14 @@ void correctleft()
   analogWrite(EN1, 200);
   analogWrite(EN2, 150);
 }
-
+void stall()
+{
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, HIGH);
+}
+  
 void echoCheck() { // If ping received, set the sensor distance to array.
   if (sonar[currentSensor].check_timer())
     cm[currentSensor] = sonar[currentSensor].ping_result / US_ROUNDTRIP_CM;
