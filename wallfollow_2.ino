@@ -39,11 +39,19 @@ void loop() {
   Serial.print(forw);
   Serial.print(" Right: ");
   Serial.println(right);
+<<<<<<< HEAD
   if(left<THRES && right != 0 && left != 0 && right<THRES && (forw>THRES||forw == 0))
     goforward();
   else if((left>THRES||left == 0) && right<THRES && right != 0)
     intersectionleft();
   else if(left<THRES && left!= 0 && (right>THRES||right == 0))
+=======
+  if(left<THRES && right<THRES && forw>THRES)
+    goforward();
+  else if(left>THRES && right<THRES)
+    intersectionleft();
+  else if(left<THRES && right>THRES)
+>>>>>>> b9edb7e01fdb9a7e80c3a1b3c25259e7222d03e1
     intersectionright();
 }
 
@@ -51,7 +59,7 @@ void intersectionright() //code to be run if there is a right turn intersection
 {
   Serial.println("In intersection right");
   myservo.write(90);
-  while(getdist()<MAX_DISTANCE-1 || getdist() == 0)
+  while(getdist()<MAX_DISTANCE-1)
   {
     turnright();
   }
@@ -61,7 +69,7 @@ void intersectionleft() //code to be run if there is a left turn intersection
 {
   Serial.println("In intersection left");
   myservo.write(90);
-  while(getdist()<MAX_DISTANCE-1 || getdist() == 0)
+  while(getdist()<MAX_DISTANCE-1)
   {
     turnleft();
   }
