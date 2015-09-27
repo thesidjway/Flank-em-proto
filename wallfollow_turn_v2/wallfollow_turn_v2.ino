@@ -2,16 +2,18 @@
 #define SONAR_NUM     3 // Number or sensors.
 #define MAX_DISTANCE 400 // Maximum distance (in cm) to ping.
 #define PING_INTERVAL 66 // Milliseconds between sensor pings (29ms is about the min to avoid cross-sensor echo).
-#define THRES 16
-#define THRESH_UP 50
+#define THRES 30
+#define THRES_FORW 1
+#define THRESH_UP 30
 #define ERROR_THRESH 20
+#define OVERFLOW 10
 #define IN1 10
 #define IN2 13
 #define IN4 11
 #define IN3 12
 #define EN1 8
 #define EN2 9
-#define TURN_THRES 60
+#define TURN_THRES 200
 int flag_turn = 0;
 unsigned long pingTimer[SONAR_NUM]; // Holds the times when the next ping should happen for each sensor.
 unsigned int cm[SONAR_NUM];         // Where the ping distances are stored.
@@ -28,6 +30,8 @@ int getdistleft();
 int getdistright();
 int getdistfor();
 void goforward();
+void correctleft();
+void correctright();
 void stall();
 int left;
 int right;
@@ -65,17 +69,38 @@ void loop()
   Serial.print(forw);
   Serial.print(" Right: ");
   Serial.println(right);
-  if (left < THRES && right != 0 && left != 0 && right < THRES && (forw > THRES || forw == 0))
+  if (left < THRES && right != 0 && left != 0 && right < THRES && (forw > THRES_FORW || forw == 0))
   {
-    goforward();
+    if (fabs(left - right) <= 2)
+    {
+      goforward();
+    }
+    else if (right > left)
+    {
+      correctright();
+    }
+    else if (left > right)
+    {
+      correctleft();
+    }
   }
   else if ((left >= THRESH_UP) && (right < THRES && right != 0) && flag_turn == 0)
   {
+    Serial.println("FOUND A TURN");
+    for (int i = 0; i < OVERFLOW; i++)
+    {
+      goforward();
+    }
     intersectionleft();
     cycle = 1;
   }
   else if ((left < THRES && left != 0) && (right >= THRESH_UP) && flag_turn == 0)
   {
+    Serial.println("FOUND A TURN");
+    for (int i = 0; i < OVERFLOW; i++)
+    {
+      goforward();
+    }
     intersectionright();
     cycle = 1;
   }
@@ -205,25 +230,23 @@ void turnright()
 }
 void correctright()
 {
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-  analogWrite(EN1, 150);
-  analogWrite(EN2, 200);
+  Serial.println("########CORRECTING RIGHT#########");
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  analogWrite(EN1, 230);
+  analogWrite(EN2, 232);
 }
 void correctleft()
 {
-  digitalWrite(IN1, HIGH);
-  digitalWrite(IN2, LOW);
-  digitalWrite(IN3, HIGH);
-  digitalWrite(IN4, LOW);
-  analogWrite(EN1, 200);
-  analogWrite(EN2, 150);
+  Serial.println("#########CORRECTING LEFT#########");
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  analogWrite(EN1, 232);
+  analogWrite(EN2, 230);
 }
 void stall()
 {
