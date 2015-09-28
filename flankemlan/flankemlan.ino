@@ -2,39 +2,42 @@
 #define SONAR_NUM     3 // Number or sensors.
 #define MAX_DISTANCE 400 // Maximum distance (in cm) to ping.
 #define PING_INTERVAL 66 // Milliseconds between sensor pings (29ms is about the min to avoid cross-sensor echo).
-#define THRES 20
-#define THRES_FORW 14
-#define THRESH_UP 30
-#define ERROR_THRESH 10
+#define THRES 40
+#define THRESH_UP 50
+#define ERROR_THRESH 20
 #define IN1 10
 #define IN2 13
 #define IN4 11
 #define IN3 12
 #define EN1 8
-#define EN2 9
-#define TURN_THRES 200
-int           flag_turn = 0;
+#define EN2 6
+#define TURN_THRES 60
+int flag_turn = 0;
 unsigned long pingTimer[SONAR_NUM]; // Holds the times when the next ping should happen for each sensor.
-unsigned int  cm[SONAR_NUM];         // Where the ping distances are stored.
-uint8_t       currentSensor = 0;          // Keeps track of which sensor is active.
-int           cycle = 0;
-void          intersctionright();
-void          intersectionleft();
-void          turnright();
-void          turnleft();
-void          correctright();
-void          correctleft();
-void          moveservo(int);
-int           getdistleft();
-int           getdistright();
-int           getdistfor();
-void          goforward();
-void          correctleft();
-void          correctright();
-void          stall();
-int           left;
-int           right;
-int           forw;
+unsigned int cm[SONAR_NUM];         // Where the ping distances are stored.
+uint8_t currentSensor = 0;          // Keeps track of which sensor is active.
+int cycle = 0;
+void intersctionright();
+void intersectionleft();
+void turnright();
+void turnleft();
+void correctright();
+void correctleft();
+void moveservo(int);
+int getdistleft();
+int getdistright();
+int getdistfor();
+void goforward();
+void stall();
+int left;
+int right;
+int forw;
+
+  int arrleft[3]={0,0,0};
+  int arrright[3]={0,0,0};
+  int arrfor[3]={0,0,0};
+  int flagnot=0;
+
 NewPing sonar[SONAR_NUM] = {     // Sensor object array. trig followed by echo
   NewPing(37, 36, MAX_DISTANCE), // left
   NewPing(39, 38, MAX_DISTANCE), //forw
@@ -44,19 +47,20 @@ NewPing sonar[SONAR_NUM] = {     // Sensor object array. trig followed by echo
 
 void setup()
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
   pingTimer[0] = millis() + 75;           // First ping starts at 75ms, gives time for the Arduino to chill before starting.
   for (uint8_t i = 1; i < SONAR_NUM; i++) // Set the starting time for each sensor.
     pingTimer[i] = pingTimer[i - 1] + PING_INTERVAL;
-  pinMode(EN1, OUTPUT); //en1
-  pinMode(EN2, OUTPUT); //en2
+  //pinMode(EN1, OUTPUT); //en1
+  //pinMode(EN2, OUTPUT); //en2
   pinMode(IN1, OUTPUT); //left Motor input 1
   pinMode(IN2, OUTPUT); //left Motor input 2
   pinMode(IN4, OUTPUT); //right Motor input 1
   pinMode(IN3, OUTPUT); //right Motor input 2
-  digitalWrite(EN2, HIGH);
-  digitalWrite(EN1, HIGH);
+  //digitalWrite(EN2, HIGH);
+  //digitalWrite(EN1, HIGH);
 }
+
 
 void loop()
 {
@@ -68,78 +72,36 @@ void loop()
   Serial.print(forw);
   Serial.print(" Right: ");
   Serial.println(right);
-  if (left < THRES && right != 0 && left != 0 && right < THRES && (forw > THRES_FORW || forw == 0))
-  {
-    if (fabs(left - right) <= 2)
-    {
-      goforward();
-      delay(20);
-    }
-    else if (right > left)
-    {
-      correctright();
-      delay(20);
-    }
-    else if (left > right)
-    {
-      correctleft();
-      delay(20);
-    }
-  }
-  else if ((left >= THRESH_UP) && (right < THRES && right != 0) && flag_turn == 0)
-  {
-    Serial.println("FOUND A TURN");
-    //goforward();
-    //goforward();
-    //stall();
-    //stall();
-    //delay(20);
-    intersectionleft();
-    cycle = 1;
-    delay(20);
-  }
-  else if ((left < THRES && left != 0) && (right >= THRESH_UP) && flag_turn == 0)
-  {
-    Serial.println("FOUND A TURN");
+  arrleft[flagnot]=left;
+  arrright[flagnot]=right;
+  arrfor[flagnot]=forw;
+  flagnot++;
+  if(flagnot==3) {flagnot=0;}
+  Serial.print(arrleft[flagnot]);
+  Serial.print(" ");
+  Serial.print(arrright[flagnot]);
+  Serial.print(" ");
+  Serial.print(arrfor[flagnot]);
+  Serial.print(" ");
+  Serial.println(flagnot);
+  
+  
+  
+        // if (left < THRES && right != 0 && left != 0 && right < THRES && (forw > 5 || forw == 0))
+         {
+           
+            if (arrright[flagnot] > arrleft[flagnot])
+            {
+              correctright();
+            }
+            else if (arrleft[flagnot] > arrright[flagnot])
+            {
+              correctleft();
+            }
+         }
+  
+  
 
-    //stall();
-    //delay(20);
-    //goforward();
-    // goforward();
-    // stall();
-    intersectionright();
-    cycle = 1;
-    delay(20);
-  }
-  else if (flag_turn == 1)
-  {
-    goforward();
-    delay(20);
-  }
-  else
-  {
-    stall();
-    delay(20);
-  }
-  if ((cycle != 0) && (cycle < TURN_THRES))
-  {
-    flag_turn = 1;
-    cycle++;
-  }
-  else if (cycle == 0)
-  {
-    cycle = 0;
-  }
-  else if (cycle >= TURN_THRES)
-  {
-    flag_turn = 0;
-    cycle = 0;
-  }
-  else
-  {
-    cycle = 0;
-  }
-  delay(20);
 }
 void get_distance_all_sensors()
 {
@@ -161,8 +123,6 @@ void get_distance_all_sensors()
 }
 void intersectionright() //code to be run if there is a right turn intersection
 {
-  //goforward();
-  //delay(10);
   get_distance_all_sensors();
   int old_r[3] = {left, forw, right};
   while (!(fabs(left - old_r[1]) <= ERROR_THRESH && fabs(forw - old_r[2]) <= ERROR_THRESH))
@@ -174,7 +134,6 @@ void intersectionright() //code to be run if there is a right turn intersection
     Serial.print("IN2 : "); Serial.println(digitalRead(IN2));
     Serial.print("IN3 : "); Serial.println(digitalRead(IN3));
     Serial.print("IN4 : "); Serial.println(digitalRead(IN4));
-    delay(20);
 
   }
 }
@@ -182,8 +141,6 @@ void intersectionright() //code to be run if there is a right turn intersection
 void intersectionleft() //code to be run if there is a left turn intersection
 {
   Serial.println("In intersection left");
-  //goforward();
-  //delay(10);
   get_distance_all_sensors();
   int old_r[3] = {left, forw, right};
   while (!(fabs(right - old_r[1]) <= ERROR_THRESH && fabs(forw - old_r[0]) <= ERROR_THRESH))
@@ -191,7 +148,7 @@ void intersectionleft() //code to be run if there is a left turn intersection
     turnleft();
     get_distance_all_sensors();
     Serial.println("left");
-    delay(20);
+
   }
 
 }
@@ -199,23 +156,19 @@ void intersectionleft() //code to be run if there is a left turn intersection
 void goforward()
 {
   Serial.println("###########GO FORWARD ###########");
-  digitalWrite(EN1, HIGH);
-  digitalWrite(EN2, HIGH);
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
-  Serial.print("IN1 : "); Serial.println(digitalRead(IN1));
-  Serial.print("IN2 : "); Serial.println(digitalRead(IN2));
-  Serial.print("IN3 : "); Serial.println(digitalRead(IN3));
-  Serial.print("IN4 : "); Serial.println(digitalRead(IN4));
+  
+  analogWrite(EN1, 90);
+  analogWrite(EN2, 100);
+  
 }
 
 void turnleft()
 {
   Serial.println("###########LEFT TURN ###########");
-  digitalWrite(EN1, HIGH);
-  digitalWrite(EN2, HIGH);
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, HIGH);
@@ -246,23 +199,24 @@ void turnright()
 }
 void correctright()
 {
-  Serial.println("########CORRECTING RIGHT#########");
+  Serial.println("*******************************");
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
-  analogWrite(EN1, 230);
-  analogWrite(EN2, 232);
+
+  analogWrite(EN1, 80);
+  analogWrite(EN2, 120);
 }
 void correctleft()
 {
-  Serial.println("#########CORRECTING LEFT#########");
+  Serial.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
   digitalWrite(IN1, LOW);
   digitalWrite(IN2, HIGH);
   digitalWrite(IN3, LOW);
   digitalWrite(IN4, HIGH);
-  analogWrite(EN1, 232);
-  analogWrite(EN2, 230);
+  analogWrite(EN1, 105);
+  analogWrite(EN2, 100);
 }
 void stall()
 {
