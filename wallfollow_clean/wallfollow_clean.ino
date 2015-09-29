@@ -9,9 +9,9 @@
 #define IN1 10
 #define IN2 13
 #define IN4 11
-#define IN3 12
-#define EN1 8
-#define EN2 9
+#define IN3 9
+#define EN1 12
+#define EN2 6
 unsigned long pingTimer[SONAR_NUM]; // Holds the times when the next ping should happen for each sensor.
 unsigned int cm[SONAR_NUM];         // Where the ping distances are stored.
 uint8_t currentSensor = 0;          // Keeps track of which sensor is active.

@@ -1,15 +1,16 @@
-#define S0 8
-#define S1 9
-#define OE 10
-#define S2 11
-#define S3 12
-#define OUT 13
-
+#define S0 3
+#define S1 4
+#define OE 5
+#define S2 6
+#define S3 7
+#define OUT 8
+#define PURPLETHRES1 35
+#define PURPLETHRES2 50
+#define PURPLETHRES3 18
 #define REDTHRES 20
 #define BLUETHRES 45
 #define GREENTHRES 25
 #define YELLOWTHRES 17
-
 int red = 0;  
 int green = 0; 
 int blue = 0;  
@@ -35,7 +36,8 @@ void loop()
   Serial.print(green, DEC);  
   Serial.print(" B Intensity : ");  
   Serial.print(blue, DEC);  
-
+  if(red<green && blue<green && green>PURPLETHRES1 && green<PURPLETHRES2 && red>PURPLETHRES3)
+  Serial.println(" - (Purple colour)");
   else if (green < red && green < blue && green<GREENTHRES) 
   Serial.println(" - (Green colour)");  
   else if(green<blue && red<blue && blue>YELLOWTHRES)
@@ -44,6 +46,7 @@ void loop()
   Serial.println(" - (Red colour)");  
   else if (blue < red && blue < green && blue<BLUETHRES)   
   Serial.println(" - (Blue colour)"); 
+  
   
   else
   Serial.println();  
